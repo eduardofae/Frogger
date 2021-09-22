@@ -1,5 +1,5 @@
 /*
-Esse programa organiza a compra e venda de acoes de 4 empresas
+Frogger UFRGS (EDUARDO e JOSE)
 */
 #include<stdio.h>
 #include<conio2.h>
