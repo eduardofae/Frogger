@@ -5,43 +5,73 @@ Frogger UFRGS (EDUARDO e JOSE)
 #include<conio2.h>
 #include<stdlib.h>
 
-
-# define XINI 1
-# define XFIM 82
-# define YINI 2
-# define YFIM 26
-# define LARGSAPO 8
-# define ALTURASAPO 2
-# define LINHA '='
-# define COLUNA '*'
-
+# define LINHA '-'
+# define COLUNA '|'
 # define LARGURACOMANDOS -21
 
-void borda();
-void movimento();
-void desenhaSapo(int[]);
-void apagaSapo(int[]);
-void desenhaAmbiente();
+
 
 enum{
     ENTER = 13,
     ESPACO = 32,
     ESC = 27,
     PAUSA = 112,
-    SPECIAL = 224,
+    ESPECIAL = -32,
 
-    LEFT = 75,
-    RIGHT = 77,
-    UP = 72,
-    DOWN = 80
+    ESQ = 75,
+    DIR = 77,
+    CIMA = 72,
+    BAIXO = 80,
 };
 
+enum{
+    COR_FUNDO = BLACK,
+    COR_SAPO = GREEN
+};
+
+enum{
+    LIM_ESQ = 1,
+    LIM_DIR = 80,
+    LIM_CIMA = 2,
+    LIM_BAIXO = 26,
+};
+
+enum{
+    LARGSAPO = 8,
+    ALTURASAPO = 2,
+
+    DISTANCIAX = LARGSAPO,
+    DISTANCIAY = ALTURASAPO*2,
+
+    POS_INIX = LIM_DIR/2 - LARGSAPO/2 + 1,
+    POS_INIX2 = POS_INIX + LARGSAPO,
+    POS_INIY = LIM_BAIXO + 1,
+    POS_INIY2 = POS_INIY + ALTURASAPO
+};
+
+enum{
+    CHEGADA = LIM_CIMA + ALTURASAPO + 1,
+    MEIO_BAIXO = LIM_BAIXO - ((2 * DISTANCIAY) + 1),
+    MEIO_CIMA = MEIO_BAIXO - (ALTURASAPO + 1)
+};
+
+void borda();
+void desenhaSapo(int x, int y);
+void apagaSapo(int x, int y);
+void desenhaAmbiente(int x, int y);
+void jogo(int *xs1, int *xs2, int *ys1, int *ys2);
+void testaMov(int *xs1, int *xs2, int *ys1, int *ys2, char tecla);
+void moveSapo(int *xs1, int *xs2, int *ys1, int *ys2, char tecla);
 
 int main()
 {
-    desenhaAmbiente();
-    textcolor(WHITE);
-    movimento();
+    int x1 = POS_INIX,
+        x2 = POS_INIX2,
+        y1 = POS_INIY,
+        y2 = POS_INIY2;
+
+    desenhaAmbiente(x1, y1);
+    jogo(&x1,&x2,&y1,&y2);
     return(0);
 }
 
@@ -49,86 +79,108 @@ void borda()
 {
     int i;
     textcolor(BLUE);
-    for(i = YINI; i <= YFIM; i++)
+    for(i = LIM_CIMA; i <= LIM_BAIXO; i++)
     {
-        putchxy(XINI, i, COLUNA);
-        putchxy(XFIM, i, COLUNA);
+        putchxy(LIM_ESQ, i, COLUNA);
+        putchxy(LIM_DIR, i, COLUNA);
     }
-    for(i = XINI; i <= XFIM; i++)
+    for(i = LIM_ESQ; i <= LIM_DIR; i++)
     {
-        putchxy(i, YINI, LINHA);
-        putchxy(i, YFIM, LINHA);
+        putchxy(i, LIM_CIMA, LINHA);
+        putchxy(i, LIM_BAIXO, LINHA);
     }
 }
 
-void movimento()
+void jogo(int *xs1, int *xs2, int *ys1, int *ys2)
 {
-    int posicao[2] = {(XFIM / 2 - LARGSAPO / 2) + 1, YFIM + 1};
-    int stop = 0;
-    int c;
-    desenhaSapo(posicao);
-    while (!stop)
+    int para = 0;
+    char tecla;
+    while (!para)
     {
         if(_kbhit())
         {
-            c = _getch();
-            if(c == SPECIAL)
+            tecla = getch();
+            if(tecla == ESPECIAL)
             {
-                c = _getch();
-                gotoxy(XINI, YFIM + 1);
-                apagaSapo(posicao);
-                switch(c)
-                {
-                case LEFT:
-                    posicao[0] -= LARGSAPO + 1;
-                    break;
-                case RIGHT:
-                    posicao[0] += LARGSAPO + 1;
-                    break;
-                case UP:
-                    posicao[1] -= ALTURASAPO * 2;
-                    break;
-                case DOWN:
-                    posicao[1] += ALTURASAPO * 2;
-                    break;
-                default:
-                    ;
-                }
-                desenhaSapo(posicao);
+                tecla = getch();
+                moveSapo(xs1,xs2,ys1,ys2, tecla);
+            } else if (tecla == ESC){
+                para = 1;
             }
         }
-
     }
 }
 
-void desenhaSapo(int coord[])
+void moveSapo(int *xs1, int *xs2, int *ys1, int *ys2, char tecla)
 {
-    gotoxy(coord[0], coord[1]);
+    apagaSapo(*xs1,*ys1);// apaga sapo
+    testaMov(xs1, xs2, ys1, ys2, tecla );
+    desenhaSapo(*xs1, *ys1); // desenha novo sapo
+}
+
+void testaMov(int *xs1, int *xs2, int *ys1, int *ys2, char tecla)
+{
+    switch(tecla)
+    {
+    case ESQ:
+        if (*xs1-DISTANCIAX > LIM_ESQ)
+        {
+            *xs1= *xs1-DISTANCIAX;
+            *xs2= *xs2-DISTANCIAX;
+        }
+        break;
+    case DIR:
+        if (*xs2+DISTANCIAX < LIM_DIR)
+        {
+            *xs1= *xs1+DISTANCIAX;
+            *xs2= *xs2+DISTANCIAX;
+        }
+        break;
+    case CIMA:
+        if (*ys1-DISTANCIAY > LIM_CIMA)
+        {
+            *ys1= *ys1-DISTANCIAY;
+            *ys2= *ys2-DISTANCIAY;
+        }
+        break;
+    case BAIXO:
+        if (*ys2+DISTANCIAY < LIM_BAIXO)
+        {
+            *ys1= *ys1+DISTANCIAY;
+            *ys2= *ys2+DISTANCIAY;
+        }
+        break;
+    }
+}
+
+void desenhaSapo(int x, int y)
+{
+    textcolor(COR_SAPO);
+    gotoxy(x, y);
     printf("  (OO)");
-    gotoxy(coord[0], coord[1] +1);
+    gotoxy(x, y +1);
     printf("\\^{  ]^/");
-    gotoxy(500,500);
 }
 
-void apagaSapo(int coord[])
+void apagaSapo(int x, int y)
 {
-    gotoxy(coord[0], coord[1]);
-    printf("        ");
-    gotoxy(coord[0], coord[1] +1);
-    printf("        ");
+    textcolor(COR_FUNDO);
+    gotoxy(x, y);
+    printf("  (OO)");
+    gotoxy(x, y +1);
+    printf("\\^{  ]^/");
 }
 
-void desenhaAmbiente()
+void desenhaAmbiente(int x, int y)
 {
     int i;
     printf("   INF1202 Eduardo & Jose     (C)arregar jogo   (P)ausa   (ESC)Sair   (R)Ranking");
     borda();
-    for(i = XINI; i <= XFIM; i++)
+    for(i = LIM_ESQ; i <= LIM_DIR; i++)
     {
-        putchxy(i, YINI + ALTURASAPO + 1, LINHA);
-        putchxy(i, YFIM - ((2 * (ALTURASAPO * 2)) + 1), LINHA);
-        putchxy(i, YFIM - (((2 * (ALTURASAPO * 2)) + 1) + ALTURASAPO + 1), LINHA);
+        putchxy(i, CHEGADA, LINHA);
+        putchxy(i, MEIO_BAIXO, LINHA);
+        putchxy(i, MEIO_CIMA, LINHA);
     }
-
-
+    desenhaSapo(x, y);
 }
