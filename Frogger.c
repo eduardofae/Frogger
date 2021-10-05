@@ -12,7 +12,8 @@ Frogger UFRGS (EDUARDO e JOSE)
 # define COLUNA '|'
 # define LARGURACOMANDOS -21
 
-enum{
+enum
+{
     ENTER = 13,
     ESPACO = 32,
     ESC = 27,
@@ -25,7 +26,8 @@ enum{
     BAIXO = 80,
 };
 
-enum{
+enum
+{
     COR_FUNDO = BLACK,
     COR_SAPO = GREEN,
     COR_CARRO = YELLOW,
@@ -34,14 +36,16 @@ enum{
     COR_MENU = WHITE
 };
 
-enum{
+enum
+{
     LIM_ESQ = 1,
     LIM_DIR = 80,
     LIM_CIMA = 2,
     LIM_BAIXO = 26,
 };
 
-enum{
+enum
+{
     LARGSAPO = 8,
     ALTURASAPO = 2,
 
@@ -54,14 +58,21 @@ enum{
     POS_INIY2 = POS_INIY + (ALTURASAPO - 1)
 };
 
-enum{
+enum
+{
     LARGCAMINHAO = 8,
     LARGCARRO = 4,
-    ALTURAVEICULO = 3
+    ALTURAVEICULO = 3,
+
+    DIST_MIN = LARGSAPO + (LARGSAPO / 2),
+    DIST_VARIACAO = LARGSAPO / 2,
+
+    QTD_COORD_ENV = 4
 };
 
 
-enum{
+enum
+{
     CHEGADA = LIM_CIMA + ALTURASAPO + 1,
     MEIO_BAIXO = LIM_BAIXO - ((2 * DISTANCIAY) + 1),
     MEIO_CIMA = MEIO_BAIXO - (ALTURASAPO + 1),
@@ -72,9 +83,10 @@ enum{
     PISTA4 = LIM_BAIXO - ALTURAVEICULO - 1,
 
     QTD_PISTA = 4,
-    LIM_PISTA = 5
-};
+    LIM_PISTA = 5,
 
+    QTD_VEICULOS = QTD_PISTA * LIM_PISTA
+};
 
 void borda();
 void desenhaSapo(int x, int y);
@@ -87,6 +99,9 @@ void desenhaVeiculo(int x, int y, int tipo);
 void apagaVeiculo(int x, int y);
 void criaVeiculos(int tipos[], int posicao[]);
 void criaPistas(int tipos_veiculos[QTD_PISTA][LIM_PISTA], int pos_veiculos[QTD_PISTA][LIM_PISTA]);
+void moveVeiculos(int pos_pistas[QTD_PISTA][LIM_PISTA], int tipo_pista[QTD_PISTA][LIM_PISTA], int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV]);
+void inicializaEnvelopes(int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV], int pos_pistas[QTD_PISTA][LIM_PISTA], int tipo_pista[QTD_PISTA][LIM_PISTA]);
+void testa_colisao(int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV],int xs1 ,int ys1 ,int xs2 ,int ys2, int *colidiu);
 
 int main()
 {
@@ -117,7 +132,7 @@ void borda()
     {
         putchxy(i, LIM_CIMA, LINHA);
         putchxy(i, LIM_BAIXO, LINHA);
-        // Linhas de separação
+        // Linhas de separaï¿½ï¿½o
         putchxy(i, CHEGADA, LINHA);
         putchxy(i, MEIO_BAIXO, LINHA);
         putchxy(i, MEIO_CIMA, LINHA);
@@ -130,19 +145,16 @@ void jogo(int *xs1, int *xs2, int *ys1, int *ys2)
     char tecla;
     int tipo_pista[QTD_PISTA][LIM_PISTA];
     int pos_pistas[QTD_PISTA][LIM_PISTA];
+    int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV];
+    int colidiu=0;
+
+
     criaPistas(tipo_pista, pos_pistas);
+    inicializaEnvelopes(envelopes_veiculos,pos_pistas,tipo_pista);
     while (!para)
     {
-        pos_pistas[0][0]++;
-        pos_pistas[0][1]++;
-        pos_pistas[0][2]++;
-        desenhaVeiculo(pos_pistas[0][0], PISTA1 ,tipo_pista[0][0]);
-        desenhaVeiculo(pos_pistas[0][1], PISTA1 ,tipo_pista[0][1]);
-        desenhaVeiculo(pos_pistas[0][2], PISTA1 ,tipo_pista[0][2]);
-        Sleep(100);
-        apagaVeiculo(pos_pistas[0][0], PISTA1);
-        apagaVeiculo(pos_pistas[0][1], PISTA1);
-        apagaVeiculo(pos_pistas[0][2], PISTA1);
+        moveVeiculos(pos_pistas, tipo_pista,envelopes_veiculos);
+        testa_colisao(envelopes_veiculos, *xs1,*ys1,*xs2,*ys2, &colidiu);
         if(_kbhit())
         {
             tecla = getch();
@@ -150,12 +162,98 @@ void jogo(int *xs1, int *xs2, int *ys1, int *ys2)
             {
                 tecla = getch();
                 moveSapo(xs1,xs2,ys1,ys2, tecla);
-            } else if (tecla == ESC){
+            }
+            else if (tecla == ESC)
+            {
                 para = 1;
             }
         }
+        if (colidiu)
+            para = 1;
     }
 }
+
+void testa_colisao(int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV],int xs1 ,int ys1 ,int xs2 ,int ys2, int *colidiu) {
+
+    int i=0;
+    while(!(*colidiu) && i<QTD_VEICULOS)
+    {
+        if ( ((xs1 <= envelopes_veiculos[i][2] && xs1 >= envelopes_veiculos[i][0] ) || ( xs2 >= envelopes_veiculos[i][0] && xs2 <= envelopes_veiculos[i][2] ))  && (ys2 == envelopes_veiculos[i][3]) )
+        {
+            *colidiu = 1;
+        }
+        i++;
+    }
+}
+
+void inicializaEnvelopes(int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV], int pos_pistas[QTD_PISTA][LIM_PISTA], int tipo_pista[QTD_PISTA][LIM_PISTA])
+{
+    int i,j=0,k=0;
+    int pistas[QTD_PISTA] = { PISTA1, PISTA2, PISTA3, PISTA4 };
+    int aux;
+    for (i=0; i<QTD_VEICULOS; i++)
+    {
+        // for (j=0; j<QTD_COORD_ENV; j++) {
+        // pos_pistas     pos_pista + tipos_pista(0? LARG_CAMINHAO, 1? LARG_CARRO)
+        // pos_pistas[carro][x]      pistas[0]                                   pistas[0] + tipos_pista(ALT_VEICULOS)
+        //  |        |                      |                                 |
+        //     x1       y1      ,             x2 ,                               y2
+        // 00 = 00 , 01 = 01 02 03
+        // 10 =  ,11 12 13 14 ...
+        //k simboliza pista que cresce a cada 5 veiculos
+        // j quando k muda vira 0 de novo
+        //x1
+        envelopes_veiculos[i][0] = pos_pistas[k][j],
+        //y1
+        envelopes_veiculos[i][1] = pistas[k];
+        // x2
+        aux=LARGCAMINHAO;
+        if (tipo_pista[k][j])
+            aux=LARGCARRO;
+
+        envelopes_veiculos[i][2] = pos_pistas[k][j] + aux-1;
+
+        //y2
+        envelopes_veiculos[i][3] = pistas[k] + ALTURAVEICULO - 1;
+
+        j++;
+        if ( j>LIM_PISTA )
+        {
+            k++;
+            j=0;
+        }
+    }
+}
+
+void moveVeiculos(int pos_pistas[QTD_PISTA][LIM_PISTA], int tipo_pista[QTD_PISTA][LIM_PISTA], int envelopes_veiculos[QTD_VEICULOS][QTD_COORD_ENV])
+{
+    int pistas[QTD_PISTA] = { PISTA1, PISTA2, PISTA3, PISTA4 };
+    int i,j;
+
+    for (i=0; i<QTD_PISTA; i++)
+    {
+        for (j=0; j<LIM_PISTA; j++)
+        {
+            pos_pistas[i][j]++;
+            desenhaVeiculo(pos_pistas[i][j], pistas[i],tipo_pista[i][j]);
+        }
+    }
+
+    for(i=0; i<QTD_VEICULOS; i++) {
+        envelopes_veiculos[i][0]++;
+        envelopes_veiculos[i][2]++;
+    }
+
+    Sleep(100);
+    for (i=0; i<QTD_PISTA; i++)
+    {
+        for (j=0; j<LIM_PISTA; j++)
+        {
+            apagaVeiculo(pos_pistas[i][j], pistas[i]);
+        }
+    }
+}
+
 
 void moveSapo(int *xs1, int *xs2, int *ys1, int *ys2, char tecla)
 {
@@ -280,7 +378,7 @@ void criaVeiculos(int tipos[], int posicao[])
     posicao[0] = - LARGCAMINHAO;
     for(i = 1; i < LIM_PISTA; i++)
     {
-        dist = LARGSAPO + rand() % (LARGSAPO / 2);
+        dist = DIST_MIN + rand() % DIST_VARIACAO;
         if(tipos[i])
         {
             posicao[i] = posicao[i - 1] - LARGCARRO - dist;
@@ -303,7 +401,6 @@ void criaPistas(int tipos_veiculos[QTD_PISTA][LIM_PISTA], int pos_veiculos[QTD_P
 
 void desenhaAmbiente(int x, int y)
 {
-    int i;
     gotoxy(1,1);
     textcolor(COR_MENU);
     printf(" INF1202 Eduardo & Jose     (C)arregar jogo   (P)ausa   (ESC)Sair   (R)Ranking");
