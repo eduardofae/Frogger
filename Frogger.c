@@ -132,7 +132,7 @@ void borda()
     {
         putchxy(i, LIM_CIMA, LINHA);
         putchxy(i, LIM_BAIXO, LINHA);
-        // Linhas de separa��o
+        // Linhas de separacao
         putchxy(i, CHEGADA, LINHA);
         putchxy(i, MEIO_BAIXO, LINHA);
         putchxy(i, MEIO_CIMA, LINHA);
