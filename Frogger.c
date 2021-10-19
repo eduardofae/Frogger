@@ -11,7 +11,7 @@ Frogger UFRGS (EDUARDO e JOSE)
 
 # define LINHA '-'
 # define COLUNA '|'
-# define LARGURACOMANDOS -21
+# define PUNICAO_MORTE 30
 
 enum
 {
@@ -166,48 +166,29 @@ void borda();
 void desenhaSapo(SAPO sapo);
 void apagaSapo(SAPO sapo);
 void desenhaAmbiente(SAPO listaSapos[], JOGADOR jog);
-
-void jogo(SAPO listaSapos[],JOGADOR *jog,
-          int x1[QTD_VEICULOS], int y1[QTD_VEICULOS], int x2[QTD_VEICULOS], int y2[QTD_VEICULOS],
-          int tipoVeiculo[QTD_VEICULOS], int distVeiculo[QTD_VEICULOS],
-          short int veiculoValido[QTD_VEICULOS], int direcao[QTD_VEICULOS]);
-
+void jogo(SAPO listaSapos[],JOGADOR *jog, VEICULO listaVeiculos[]);
 void testaMov(SAPO *sapo, char tecla);
 void moveSapo(SAPO *sapo, char tecla);
 void desenhaVeiculo(VEICULO veiculo, COLORS cor);
-
-void desenha_lista_veiculos(int pontox1[], int pontoy1[], int pontox2[], int pontoy2[],
-                            int tipoVeiculo[], int distVeiculo[], int direcao[],short int veiculo_valido[]);
-
-short testa_colisao(int xs1,int ys1,int xs2,int ys2, int x1, int y1, int x2, int y2);
-
-void inicializar(JOGADOR *jog, SAPO lista_sapos[],
-                 int tipoVeiculo[QTD_VEICULOS], int distVeiculo[QTD_VEICULOS], int direcao[QTD_VEICULOS], int ypistas[QTD_PISTA]);
-
-int mata_sapo(SAPO listaSapos,JOGADOR *jog,int x1, int x2, int y1, int y2);
-void explodeSapo(int x, int y);
-void banner(char msg[TAM_BANNER]);
+void desenha_lista_veiculos(VEICULO listaVeiculos[]);
+short testa_colisao(SAPO sapo, VEICULO veiculo);
+void inicializar(JOGADOR *jog, SAPO listaSapos[], VEICULO listaVeiculos[], int ypistas[QTD_PISTA]);
+int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo);
+void explodeSapo(SAPO sapo);
+void banner(char msg[TAM_BANNER], int y);
 void placar(JOGADOR jog);
 int salvaSapo(JOGADOR *jog, SAPO listaSapos[]);
 void inicializaJogador(JOGADOR *jog);
+void inicializaSapos(SAPO listaSapos[]);
+void inicializaVeiculos(VEICULO veiculos[], int ypistas[]);
+int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura);
+void calcula_score(JOGADOR *jog);
 
 int main()
 {
-    int
+    int ypistas[QTD_PISTA];
 
-        x1[QTD_VEICULOS],
-        y1[QTD_VEICULOS],
-        x2[QTD_VEICULOS],
-        y2[QTD_VEICULOS],
-
-        tipoVeiculo[QTD_VEICULOS],
-        distVeiculo[QTD_VEICULOS],
-        direcao[QTD_VEICULOS],
-        ypistas[QTD_PISTA];
-
-    short int veiculoValido[QTD_VEICULOS] = {1};
-
-    //VEICULO lista_veiculos[QTD_VEICULOS];
+    VEICULO listaVeiculos[QTD_VEICULOS];
 
     SAPO listaSapos[NUM_SAPOS];
 
@@ -215,99 +196,22 @@ int main()
 
     srand(time(NULL));
 
-    inicializar(&jogador, listaSapos, tipoVeiculo, distVeiculo, direcao, ypistas);
+    inicializar(&jogador, listaSapos, listaVeiculos, ypistas);
     desenhaAmbiente( listaSapos, jogador );
 
-    jogo(listaSapos, &jogador, x1, y1, x2, y2, tipoVeiculo, distVeiculo, veiculoValido, direcao);
+    jogo(listaSapos, &jogador, listaVeiculos);
 
     gotoxy(LIM_ESQ, LIM_BAIXO+4);
     return(0);
 }
 
-void inicializar(JOGADOR *jog, SAPO listaSapos[],
-                 int tipoVeiculo[QTD_VEICULOS], int distVeiculo[QTD_VEICULOS], int direcao[QTD_VEICULOS], int ypistas[QTD_PISTA])
+void inicializar(JOGADOR *jog, SAPO listaSapos[], VEICULO listaVeiculos[], int ypistas[QTD_PISTA])
 {
-
-    int i,j=0,k=0;
-    int larg_veiculo;
-
     inicializaJogador(jog);
 
     inicializaSapos(listaSapos);
 
-    ypistas[0] = Y_INI_PISTA;
-
-    for (i=1; i<QTD_PISTA; i++)
-    {
-
-        ypistas[i] = ypistas[i-1] + LARG_PISTA;
-
-        if (ypistas[i] == MEIO_CIMA)
-        {
-            ypistas[i] = MEIO_BAIXO + 1;
-        }
-    }
-
-    for (i=0; i<QTD_VEICULOS; i++)
-    {
-        y1[i] = ypistas[k];
-        y2[i] = y1[i] + ALTURASAPO;
-        tipoVeiculo[i] = rand() % 2;
-
-        if (tipoVeiculo[i] == TIPO_CARRO )
-        {
-            larg_veiculo = LARGCARRO;
-        }
-        else
-        {
-            larg_veiculo = LARGCAMINHAO;
-        }
-
-        distVeiculo[i] = DIST_MIN + rand() % DIST_VARIACAO;
-
-        if (k%2)
-        {
-            direcao[i] = DIR_DIR;
-        }
-        else
-        {
-            direcao[i] = DIR_ESQ;
-        }
-
-        if (j == 0)
-        {
-            if (direcao[i] == DIR_DIR )
-            {
-                x2[i] = LIM_DIR - 1;
-                x1[i] = x2[i] - larg_veiculo;
-            }
-            else
-            {
-                x1[i] = LIM_ESQ + 1;
-                x2[i] = x1[i] + larg_veiculo;
-            }
-        }
-        else
-        {
-            if (direcao[i] == DIR_DIR )
-            {
-                x2[i] = x1[i-1] - distVeiculo[i];
-                x1[i] = x2[i] - larg_veiculo;
-            }
-            else
-            {
-                x1[i] = x2[i-1] + distVeiculo[i];
-                x2[i] = x1[i] + larg_veiculo;
-            }
-        }
-
-        j++;
-        if ( j==VEIC_PISTA )
-        {
-            k++;
-            j=0;
-        }
-    }
+    inicializaVeiculos(listaVeiculos, ypistas);
 }
 
 void inicializaSapos(SAPO listaSapos[]) {
@@ -322,11 +226,87 @@ void inicializaSapos(SAPO listaSapos[]) {
         listaSapos[i].envelope[1].x = POS_INIX2;
         listaSapos[i].envelope[1].y = POS_INIY2;
     }
-    listaSapos[0]->status = ATIVO;
+    listaSapos[0].status = ATIVO;
 }
 
-void inicializaVeiculos(VEICULO veiculos[]) {
-//todo
+void inicializaVeiculos(VEICULO veiculos[], int ypistas[]) {
+
+    int i,posPista=0,pista=0;
+    int largVeiculo;
+
+    ypistas[pista] = Y_INI_PISTA;
+
+    for (i= pista + 1; i<QTD_PISTA; i++)
+    {
+        ypistas[i] = ypistas[i-1] + LARG_PISTA;
+
+        if (ypistas[i] == MEIO_CIMA)
+        {
+            ypistas[i] = MEIO_BAIXO + 1;
+        }
+    }
+
+    for (i=0; i<QTD_VEICULOS; i++)
+    {
+        veiculos[i].envelope[0].y = ypistas[pista];
+        veiculos[i].envelope[1].y = veiculos[i].envelope[0].y + ALTURASAPO;
+        veiculos[i].tipo = rand() % 2;
+
+        switch (veiculos[i].tipo)
+        {
+            case CARRO:
+                largVeiculo = LARGCARRO;
+                break;
+            case CAMINHAO:
+                largVeiculo = LARGCAMINHAO;
+                break;
+        }
+
+        veiculos[i].distancia = DIST_MIN + rand() % DIST_VARIACAO;
+
+        if (pista % 2)
+        {
+            veiculos[i].dir = DIR_DIREITA;
+        }
+        else
+        {
+            veiculos[i].dir = DIR_ESQUERDA;
+        }
+
+        if (posPista == 0)
+        {
+            if (veiculos[i].dir == DIR_DIREITA )
+            {
+                veiculos[i].envelope[1].x = LIM_DIR - 1;
+                veiculos[i].envelope[0].x = veiculos[i].envelope[1].x - largVeiculo;
+            }
+            else
+            {
+                veiculos[i].envelope[0].x = LIM_ESQ + 1;
+                veiculos[i].envelope[1].x = veiculos[i].envelope[0].x + largVeiculo;
+            }
+        }
+        else
+        {
+            if (veiculos[i].dir == DIR_DIREITA )
+            {
+                veiculos[i].envelope[1].x = veiculos[i-1].envelope[0].x - veiculos[i].distancia;
+                veiculos[i].envelope[0].x = veiculos[i].envelope[1].x - largVeiculo;
+            }
+            else
+            {
+                veiculos[i].envelope[0].x = veiculos[i-1].envelope[1].x + veiculos[i].distancia;
+                veiculos[i].envelope[1].x = veiculos[i].envelope[0].x + largVeiculo;
+            }
+        }
+
+        posPista++;
+        if ( posPista == VEIC_PISTA )
+        {
+            pista++;
+            posPista=0;
+        }
+    }
 }
 
 void inicializaJogador(JOGADOR *jog)
@@ -361,10 +341,7 @@ void borda()
     }
 }
 
-void jogo(SAPO listaSapos[],JOGADOR *jog,
-          int x1[QTD_VEICULOS], int y1[QTD_VEICULOS], int x2[QTD_VEICULOS], int y2[QTD_VEICULOS],
-          int tipoVeiculo[QTD_VEICULOS], int distVeiculo[QTD_VEICULOS],
-          short int veiculoValido[QTD_VEICULOS], int direcao[QTD_VEICULOS])
+void jogo(SAPO listaSapos[],JOGADOR *jog, VEICULO listaVeiculos[])
 {
     STATUS_JOGO status = CONTINUA;
     int i;
@@ -373,14 +350,13 @@ void jogo(SAPO listaSapos[],JOGADOR *jog,
     while (status!=SAIR)
     {
         status=CONTINUA;
-        desenha_lista_veiculos(x1, y1, x2, y2, tipoVeiculo, distVeiculo, direcao, veiculoValido);
+        desenha_lista_veiculos(listaVeiculos);
         i = 0;
         while(i < QTD_VEICULOS && status==CONTINUA)
         {
-            if(veiculoValido[i])
+            if(listaVeiculos[i].valido)
             {
-                status = mata_sapo(listaSapos, jog, x1[i], x2[i], y1[i], y2[i]);
-
+                status = mata_sapo(listaSapos, jog, listaVeiculos[i]);
             }
             i++;
         }
@@ -397,7 +373,8 @@ void jogo(SAPO listaSapos[],JOGADOR *jog,
 
         if (status == SAIR)
         {
-            banner("GAME OVER!!!");
+            banner("GAME OVER!!!", 0);
+            calcula_score(jog);
         }
 
         if(_kbhit())
@@ -416,21 +393,20 @@ void jogo(SAPO listaSapos[],JOGADOR *jog,
     }
 }
 
-void banner(char msg[TAM_BANNER])
+void banner(char msg[TAM_BANNER], int y)
 {
 
     int meio = strlen(msg)/2;;
 
     textcolor(COR_TEXTO);
 
-    gotoxy( LIM_DIR/2 - meio, MEIO_CIMA + 1 );
+    gotoxy( LIM_DIR/2 - meio, (MEIO_CIMA + 1) + y );
     printf("%s",msg);
 
 }
 
 void placar(JOGADOR jog)
 {
-
     textcolor(COR_TEXTO);
 
     if (( NUM_SAPOS-1) - jog.sapoAtual >= 0 )
@@ -470,10 +446,10 @@ int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
     return CONTINUA;
 }
 
-int mata_sapo(SAPO listaSapos,JOGADOR *jog,int x1, int x2, int y1, int y2)
+int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo)
 {
 
-    if(testa_colisao(listaSapos[jog->sapoAtual],x1,y1,x2,y2))
+    if(testa_colisao(listaSapos[jog->sapoAtual], veiculo))
     {
         explodeSapo(listaSapos[jog->sapoAtual]);
         apagaSapo(listaSapos[jog->sapoAtual]);
@@ -552,45 +528,47 @@ void explodeSapo(SAPO sapo)
     printf("\\ o O    O o /");
 }
 
-short testa_colisao(SAPO sapo, int x1, int y1, int x2, int y2)
+short testa_colisao(SAPO sapo, VEICULO veiculo)
 {
 
-    if ( ( (sapo.envelope[0].x <= x2 && sapo.envelope[0].x >= x1 ) || ( sapo.envelope[1].x >= x1 && sapo.envelope[1].x <= x2 ) ) && (sapo.envelope[1].y == y2) )
+    if ( ( (sapo.envelope[0].x <= veiculo.envelope[1].x && sapo.envelope[0].x >= veiculo.envelope[0].x ) ||
+          (sapo.envelope[1].x >= veiculo.envelope[0].x && sapo.envelope[1].x <= veiculo.envelope[1].x ) ) &&
+        (sapo.envelope[1].y == veiculo.envelope[1].y) )
     {
         return 1;
     }
     return 0;
 }
 
-void desenha_lista_veiculos(VEICULO veiculos[])
+void desenha_lista_veiculos(VEICULO listaVeiculos[])
 {
     int i;
 
     for(i=0; i<QTD_VEICULOS; i++)
     {
-        desenhaVeiculo(veiculos[i], COR_FUNDO);
+        desenhaVeiculo(listaVeiculos[i], COR_FUNDO);
 
-        if(direcao[i])
+        if(listaVeiculos[i].dir == DIR_DIREITA)
         {
-            pontox1[i]+= DIST_MOV_VEIC;
-            pontox2[i]+= DIST_MOV_VEIC;
+            listaVeiculos[i].envelope[0].x += DIST_MOV_VEIC;
+            listaVeiculos[i].envelope[1].x += DIST_MOV_VEIC;
         }
         else
         {
-            pontox1[i]-= DIST_MOV_VEIC;
-            pontox2[i]-= DIST_MOV_VEIC;
+            listaVeiculos[i].envelope[0].x -= DIST_MOV_VEIC;
+            listaVeiculos[i].envelope[1].x -= DIST_MOV_VEIC;
         }
 
-        if(tipoVeiculo[i])
+        switch(listaVeiculos[i].tipo)
         {
-            veiculo_valido[i] = desenhaVeiculo(pontox1[i], pontoy1[i], tipoVeiculo[i], direcao[i], COR_CARRO);
-        }
-        else
-        {
-            veiculo_valido[i] = desenhaVeiculo(pontox1[i], pontoy1[i], tipoVeiculo[i], direcao[i], COR_CAMINHAO);
+            case CARRO:
+                desenhaVeiculo(listaVeiculos[i], COR_CARRO);
+                break;
+            case CAMINHAO:
+                desenhaVeiculo(listaVeiculos[i], COR_CAMINHAO);
+                break;
         }
     }
-    //int veiculo_valido[])
 
     Sleep(100);
 }
@@ -659,17 +637,17 @@ void apagaSapo(SAPO sapo)
     printf("\\^{  ]^/");
 }
 
-int imprimeDentro(char desenho, int largura)
+int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura)
 {
-    int dentro = 0;
+    int i, dentro = 0;
     for(i = 0; i < largura; i++)
     {
-        if(i + x < LIM_DIR && x + i > LIM_ESQ)
+        if(i + veiculo.envelope[0].x < LIM_DIR && veiculo.envelope[0].x + i > LIM_ESQ)
         {
             dentro = 1;
-            putchxy(i + x, y, desenho[0][i]);
-            putchxy(i + x, y + 1, desenho[1][i]);
-            putchxy(i + x, y + 2, desenho[2][i]);
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y, desenho[0][i]);
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 1, desenho[1][i]);
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 2, desenho[2][i]);
             // todo
             // fazer um for até altura
         }
@@ -679,46 +657,46 @@ int imprimeDentro(char desenho, int largura)
 
 void desenhaCarro(VEICULO carro, COLORS cor)
 {
-    char veiculo[ALTURAVEICULO][LARGCARRO];
+    char desenho[ALTURAVEICULO][LARGCAMINHAO];
 
     textcolor(cor);
 
     if(carro.dir == DIR_DIREITA )
     {
-        strcpy(veiculo[0], "o o");
-        strcpy(veiculo[1], "HHH>");
-        strcpy(veiculo[2], "o o");
+        strcpy(desenho[0], "o o");
+        strcpy(desenho[1], "HHH>");
+        strcpy(desenho[2], "o o");
     }
     else
     {
-        strcpy(veiculo[0], " o o");
-        strcpy(veiculo[1], "<HHH");
-        strcpy(veiculo[2], " o o");
+        strcpy(desenho[0], " o o");
+        strcpy(desenho[1], "<HHH");
+        strcpy(desenho[2], " o o");
     }
     // talvez tenha que passar com pelo menos um dos indices
-    carro.valido = imprimeDentro(veiculo,LARGCARRO);
+    carro.valido = imprimeDentro(desenho, carro, LARGCARRO);
 }
 
 void desenhaCaminhao(VEICULO caminhao, COLORS cor)
 {
-    char veiculo[ALTURAVEICULO][LARGCARRO];
+    char desenho[ALTURAVEICULO][LARGCAMINHAO];
 
     textcolor(cor);
 
-    if(caminhao.direcao == DIR_DIREITA)
+    if(caminhao.dir == DIR_DIREITA)
     {
-        strcpy(veiculo[0], " OO   o");
-        strcpy(veiculo[1], "-[[[[[(8");
-        strcpy(veiculo[2], " OO   o");
+        strcpy(desenho[0], " OO   o");
+        strcpy(desenho[1], "-[[[[[(8");
+        strcpy(desenho[2], " OO   o");
     }
     else
     {
-        strcpy(veiculo[0], " o  OO");
-        strcpy(veiculo[1], "8)]]]]]-");
-        strcpy(veiculo[2], " o  OO");
+        strcpy(desenho[0], " o  OO");
+        strcpy(desenho[1], "8)]]]]]-");
+        strcpy(desenho[2], " o  OO");
     }
     // talvez tenha que passar com pelo menos um dos indices
-    caminhao.valido = imprimeDentro(veiculo,LARGCAMINHAO);
+    caminhao.valido = imprimeDentro(desenho, caminhao, LARGCAMINHAO);
 }
 
 void desenhaVeiculo(VEICULO veiculo, COLORS cor)
@@ -759,7 +737,7 @@ void criaVeiculos(int tipos[], int posicao[])
     }
 }
 
-void desenhaAmbiente(SAPO listaSapos, JOGADOR jog)
+void desenhaAmbiente(SAPO listaSapos[], JOGADOR jog)
 {
     gotoxy(1,1);
     textcolor(COR_MENU);
@@ -769,4 +747,20 @@ void desenhaAmbiente(SAPO listaSapos, JOGADOR jog)
     desenhaSapo(listaSapos[jog.sapoAtual]);
 
     placar(jog);
+}
+
+void calcula_score(JOGADOR *jog)
+{
+    int score;
+
+    jog->tempoJogo = time(NULL) - jog->inicioJogo;
+    banner("Digite seu nome: ", 1);
+    scanf("%s", jog->nome);
+
+    // quanto menor o score, melhor
+    // punicao de 30 segundos para cada sapo morto
+    score = jog->tempoJogo + ((NUM_SAPOS - jog->saposSalvos) * PUNICAO_MORTE);
+
+    gotoxy(LIM_ESQ, LIM_BAIXO+4);
+    printf("SCORE: %d", score);
 }
