@@ -183,6 +183,8 @@ void inicializaSapos(SAPO listaSapos[]);
 void inicializaVeiculos(VEICULO veiculos[], int ypistas[]);
 int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura);
 void calcula_score(JOGADOR *jog);
+void desenhaCarro(VEICULO carro, COLORS cor);
+void desenhaCaminhao(VEICULO caminhao, COLORS cor);
 
 int main()
 {
@@ -309,6 +311,7 @@ void inicializaVeiculos(VEICULO veiculos[], int ypistas[]) {
     }
 }
 
+// QUESTAO 5
 void inicializaJogador(JOGADOR *jog)
 {
     strcpy(jog->nome,"");
@@ -446,6 +449,7 @@ int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
     return CONTINUA;
 }
 
+// QUESTAO 4
 int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo)
 {
 
@@ -528,6 +532,7 @@ void explodeSapo(SAPO sapo)
     printf("\\ o O    O o /");
 }
 
+// QUESTAO 3
 short testa_colisao(SAPO sapo, VEICULO veiculo)
 {
 
@@ -540,6 +545,7 @@ short testa_colisao(SAPO sapo, VEICULO veiculo)
     return 0;
 }
 
+// QUESTAO 2
 void desenha_lista_veiculos(VEICULO listaVeiculos[])
 {
     int i;
@@ -637,24 +643,24 @@ void apagaSapo(SAPO sapo)
     printf("\\^{  ]^/");
 }
 
-int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura)
+// QUESTAO 1
+void desenhaVeiculo(VEICULO veiculo, COLORS cor)
 {
-    int i, dentro = 0;
-    for(i = 0; i < largura; i++)
+    // imprime veiculo conforme o tipo
+    // switch para adicionar carros
+    // conforme a necessidade e tirar facil também
+    switch(veiculo.tipo)
     {
-        if(i + veiculo.envelope[0].x < LIM_DIR && veiculo.envelope[0].x + i > LIM_ESQ)
-        {
-            dentro = 1;
-            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y, desenho[0][i]);
-            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 1, desenho[1][i]);
-            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 2, desenho[2][i]);
-            // todo
-            // fazer um for até altura
-        }
+    case CARRO:
+        desenhaCarro(veiculo, cor);
+        break;
+    case CAMINHAO:
+        desenhaCaminhao(veiculo, cor);
+        break;
     }
-    return dentro;
 }
 
+// QUESTAO 1
 void desenhaCarro(VEICULO carro, COLORS cor)
 {
     char desenho[ALTURAVEICULO][LARGCAMINHAO];
@@ -677,6 +683,7 @@ void desenhaCarro(VEICULO carro, COLORS cor)
     carro.valido = imprimeDentro(desenho, carro, LARGCARRO);
 }
 
+// QUESTAO 1
 void desenhaCaminhao(VEICULO caminhao, COLORS cor)
 {
     char desenho[ALTURAVEICULO][LARGCAMINHAO];
@@ -699,20 +706,22 @@ void desenhaCaminhao(VEICULO caminhao, COLORS cor)
     caminhao.valido = imprimeDentro(desenho, caminhao, LARGCAMINHAO);
 }
 
-void desenhaVeiculo(VEICULO veiculo, COLORS cor)
+int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura)
 {
-    // imprime veiculo conforme o tipo
-    // switch para adicionar carros
-    // conforme a necessidade e tirar facil também
-    switch(veiculo.tipo)
+    int i, dentro = 0;
+    for(i = 0; i < largura; i++)
     {
-    case CARRO:
-        desenhaCarro(veiculo, cor);
-        break;
-    case CAMINHAO:
-        desenhaCaminhao(veiculo, cor);
-        break;
+        if(i + veiculo.envelope[0].x < LIM_DIR && veiculo.envelope[0].x + i > LIM_ESQ)
+        {
+            dentro = 1;
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y, desenho[0][i]);
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 1, desenho[1][i]);
+            putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 2, desenho[2][i]);
+            // todo
+            // fazer um for até altura
+        }
     }
+    return dentro;
 }
 
 void criaVeiculos(int tipos[], int posicao[])
@@ -749,6 +758,7 @@ void desenhaAmbiente(SAPO listaSapos[], JOGADOR jog)
     placar(jog);
 }
 
+// QUESTAO 6
 void calcula_score(JOGADOR *jog)
 {
     int score;
