@@ -162,6 +162,15 @@ typedef struct
     int fase; //campo opcional se quiserem trocar o desenho do carro em cada fase
 } VEICULO;
 
+typedef struct
+{
+    JOGADOR jogador;
+    int fase;
+    SAPO listaSapos[NUM_SAPOS];
+    VEICULO listaVeiculos[QTD_VEICULOS];
+
+}ESTADO;
+
 void borda();
 void desenhaSapo(SAPO sapo);
 void apagaSapo(SAPO sapo);
@@ -190,11 +199,7 @@ int main()
 {
     int ypistas[QTD_PISTA];
 
-    VEICULO listaVeiculos[QTD_VEICULOS];
-
-    SAPO listaSapos[NUM_SAPOS];
-
-    JOGADOR jogador;
+    ESTADO estado;
 
     srand(time(NULL));
 
