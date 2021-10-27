@@ -1,0 +1,21 @@
+# depslib dependency file v1.0
+1635299054 source:c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\projeto\frogger\main.c
+	<stdio.h>
+	<conio2.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<windows.h>
+	<time.h>
+	<ctype.h>
+	"arquivos.h"
+
+1635299189 c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\projeto\frogger\arquivos.h
+
+1635298716 source:c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\projeto\frogger\arquivos.c
+	<stdio.h>
+	<string.h>
+	<time.h>
+	<conio2.h>
+	"arquivos.h"
+

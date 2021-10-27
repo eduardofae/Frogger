@@ -8,7 +8,9 @@ Frogger UFRGS (EDUARDO e JOSE)
 #include<string.h>
 #include<windows.h>
 #include<time.h>
-
+#include<ctype.h>          /////////////////
+#include"arquivos.h" //<<< //  QUESTAO 6  //
+                           /////////////////
 # define LINHA '-'
 # define COLUNA '|'
 # define PUNICAO_MORTE 30
@@ -19,6 +21,7 @@ enum
     ESPACO = 32,
     ESC = 27,
     PAUSA = 112,
+    CARREGAR = 99,
     ESPECIAL = -32,
 
     ESQ = 75,
@@ -34,18 +37,6 @@ typedef enum
     SAIR = 2,
     SAPO_SALVO = 3
 }STATUS_JOGO;
-
-typedef enum
-{
-    COR_FUNDO = BLACK,
-    COR_SAPO = GREEN,
-    COR_CARRO = YELLOW,
-    COR_CAMINHAO = WHITE,
-    COR_BORDA = BLUE,
-    COR_MENU = WHITE,
-    COR_TEXTO = WHITE,
-    BRANCO = WHITE
-}COR;
 
 enum
 {
@@ -68,9 +59,7 @@ enum
     POS_INIX = LIM_DIR/2 - LARGSAPO/2 + 1,
     POS_INIX2 = POS_INIX + (LARGSAPO - 1),
     POS_INIY = LIM_BAIXO + 1,
-    POS_INIY2 = POS_INIY + (ALTURASAPO - 1),
-
-    NUM_SAPOS = 6
+    POS_INIY2 = POS_INIY + (ALTURASAPO - 1)
 };
 
 enum
@@ -85,7 +74,6 @@ enum
     DIST_MOV_VEIC = 1
 };
 
-
 enum
 {
     CHEGADA = LIM_CIMA + ALTURASAPO + 1,
@@ -94,94 +82,20 @@ enum
 
     Y_INI_PISTA = CHEGADA + 1,
     LARG_PISTA = DISTANCIAY,
-    X2_INI_PISTA = LIM_ESQ - 1,
-
-    QTD_PISTA = 4,
-    VEIC_PISTA = 15,
-
-    QTD_VEICULOS = QTD_PISTA * VEIC_PISTA
-
+    X2_INI_PISTA = LIM_ESQ - 1
 };
-
-typedef enum
-{
-    DIR_ESQUERDA = 0,
-    DIR_DIREITA = 1,
-    DIR_BAIXO = 2,
-    DIR_CIMA = 3
-} DIRECAO_MOVIMENTO;
-
-typedef enum
-{
-    CAMINHAO = 0,
-    CARRO = 1
-} TIPO_VEICULO;
-
-typedef enum
-{
-    ESPERA = 1,
-    ATIVO = 2,
-    SALVO = 3,
-    MORTO = 4
-} STATUS_SAPO;
-
-typedef struct
-{
-    int x;
-    int y;
-} COORDENADA;
-
-typedef struct  // essa proposta esta um pouco diferente do enunciado do Trabalho final.
-{
-    char nome [TAM_BANNER];
-    int saposSalvos;
-    time_t inicioJogo;
-    int tempoJogo;
-    int score;
-    int sapoAtual;
-} JOGADOR;
-
-typedef struct
-{
-    COORDENADA envelope[2]; // pontos do envelope do sapo
-    STATUS_SAPO status;
-    COR cor;
-    DIRECAO_MOVIMENTO dir;  // indica que direção o sapo vai
-    int fase;               //campo opcional se quiserem trocar o desenho do sapo em cada fase
-} SAPO ;
-
-typedef struct
-{
-    COORDENADA envelope[2]; // pontos do envelope do veículo
-    TIPO_VEICULO tipo; // sedan, ônibus, esporte
-    COR cor;
-    DIRECAO_MOVIMENTO dir; // indica que direção o veículo vai
-    int distancia;
-    int pista; // opcional se quiser tratar pista junto com o carro
-    int valido; // opcional 1 se veiculo esta na área de jogo, 0 se não esta
-    int fase; //campo opcional se quiserem trocar o desenho do carro em cada fase
-} VEICULO;
-
-typedef struct
-{
-    JOGADOR jogador;
-    int fase;
-    SAPO listaSapos[NUM_SAPOS];
-    VEICULO listaVeiculos[QTD_VEICULOS];
-
-}ESTADO;
 
 void borda();
 void desenhaSapo(SAPO sapo);
 void apagaSapo(SAPO sapo);
-void desenhaAmbiente(SAPO listaSapos[], JOGADOR jog);
-void jogo(SAPO listaSapos[],JOGADOR *jog, VEICULO listaVeiculos[]);
+void desenhaAmbiente(ESTADO estado);
+void jogo(ESTADO *estado);
 void testaMov(SAPO *sapo, char tecla);
 void moveSapo(SAPO *sapo, char tecla);
 void desenhaVeiculo(VEICULO veiculo, COLORS cor);
 void desenha_lista_veiculos(VEICULO listaVeiculos[]);
 short testa_colisao(SAPO sapo, VEICULO veiculo);
-void inicializar(JOGADOR *jog, SAPO listaSapos[], VEICULO listaVeiculos[], int ypistas[QTD_PISTA]);
+void inicializar(ESTADO *estado);
 int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo);
 void explodeSapo(SAPO sapo);
 void banner(char msg[TAM_BANNER], int y);
@@ -189,39 +103,42 @@ void placar(JOGADOR jog);
 int salvaSapo(JOGADOR *jog, SAPO listaSapos[]);
 void inicializaJogador(JOGADOR *jog);
 void inicializaSapos(SAPO listaSapos[]);
-void inicializaVeiculos(VEICULO veiculos[], int ypistas[]);
+void inicializaVeiculos(VEICULO veiculos[]);
 int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, int largura);
-void calcula_score(JOGADOR *jog);
+void calculaScore(JOGADOR *jog);
 void desenhaCarro(VEICULO carro, COLORS cor);
 void desenhaCaminhao(VEICULO caminhao, COLORS cor);
+void pedeNome(JOGADOR *jog);
+void pausa(ESTADO *estado);
+void instanciaJogo(ESTADO *estado);
+void apagaAmbiente();
 
 int main()
 {
-    int ypistas[QTD_PISTA];
-
     ESTADO estado;
 
     srand(time(NULL));
 
-    inicializar(&jogador, listaSapos, listaVeiculos, ypistas);
-    desenhaAmbiente( listaSapos, jogador );
+    inicializar(&estado); //
+    desenhaAmbiente(estado);
 
-    jogo(listaSapos, &jogador, listaVeiculos);
+    jogo(&estado);
 
     gotoxy(LIM_ESQ, LIM_BAIXO+4);
     return(0);
 }
 
-void inicializar(JOGADOR *jog, SAPO listaSapos[], VEICULO listaVeiculos[], int ypistas[QTD_PISTA])
+void inicializar(ESTADO *estado)
 {
-    inicializaJogador(jog);
+    inicializaJogador(&estado->jogador);
 
-    inicializaSapos(listaSapos);
+    inicializaSapos(estado->listaSapos);
 
-    inicializaVeiculos(listaVeiculos, ypistas);
+    inicializaVeiculos(estado->listaVeiculos);
 }
 
-void inicializaSapos(SAPO listaSapos[]) {
+void inicializaSapos(SAPO listaSapos[])
+{
     int i;
     for(i=0; i<NUM_SAPOS; i++) {
 
@@ -236,10 +153,12 @@ void inicializaSapos(SAPO listaSapos[]) {
     listaSapos[0].status = ATIVO;
 }
 
-void inicializaVeiculos(VEICULO veiculos[], int ypistas[]) {
+void inicializaVeiculos(VEICULO veiculos[])
+{
 
     int i,posPista=0,pista=0;
     int largVeiculo;
+    int ypistas[QTD_PISTA];
 
     ypistas[pista] = Y_INI_PISTA;
 
@@ -316,7 +235,6 @@ void inicializaVeiculos(VEICULO veiculos[], int ypistas[]) {
     }
 }
 
-// QUESTAO 5
 void inicializaJogador(JOGADOR *jog)
 {
     strcpy(jog->nome,"");
@@ -349,7 +267,7 @@ void borda()
     }
 }
 
-void jogo(SAPO listaSapos[],JOGADOR *jog, VEICULO listaVeiculos[])
+void jogo(ESTADO *estado)
 {
     STATUS_JOGO status = CONTINUA;
     int i;
@@ -358,44 +276,52 @@ void jogo(SAPO listaSapos[],JOGADOR *jog, VEICULO listaVeiculos[])
     while (status!=SAIR)
     {
         status=CONTINUA;
-        desenha_lista_veiculos(listaVeiculos);
+        desenha_lista_veiculos(estado->listaVeiculos);
         i = 0;
         while(i < QTD_VEICULOS && status==CONTINUA)
         {
-            if(listaVeiculos[i].valido)
+            if(estado->listaVeiculos[i].valido)
             {
-                status = mata_sapo(listaSapos, jog, listaVeiculos[i]);
+                status = mata_sapo(estado->listaSapos, &estado->jogador, estado->listaVeiculos[i]);
             }
             i++;
         }
 
         if(status == CONTINUA)
         {
-            status = salvaSapo(jog, listaSapos);
+            status = salvaSapo(&estado->jogador, estado->listaSapos);
         }
 
         if (status != CONTINUA)
         {
-            placar(*jog);
+            placar(estado->jogador);
         }
 
         if (status == SAIR)
         {
             banner("GAME OVER!!!", 0);
-            calcula_score(jog);
+            calculaScore(&estado->jogador);
         }
 
         if(_kbhit())
         {
             tecla = getch();
-            if(tecla == ESPECIAL)
+            switch(tecla)
             {
+            case ESPECIAL:
                 tecla = getch();
-                moveSapo(&listaSapos[jog->sapoAtual], tecla);
-            }
-            else if (tecla == ESC)
-            {
+                moveSapo(&estado->listaSapos[estado->jogador.sapoAtual], tecla);
+                break;
+            case PAUSA:
+                pausa(estado);
+                desenhaSapo(estado->listaSapos[estado->jogador.sapoAtual]);
+                break;
+            case CARREGAR:
+                instanciaJogo(estado);
+                break;
+            case ESC:
                 status = SAIR;
+                break;
             }
         }
     }
@@ -406,9 +332,12 @@ void banner(char msg[TAM_BANNER], int y)
 
     int meio = strlen(msg)/2;;
 
-    textcolor(COR_TEXTO);
+    gotoxy( LIM_ESQ + 1, (MEIO_CIMA + 1) + y );
+    textcolor(COR_FUNDO);
+    printf("%*s", LIM_DIR - (LIM_ESQ + 1), "");
 
     gotoxy( LIM_DIR/2 - meio, (MEIO_CIMA + 1) + y );
+    textcolor(COR_TEXTO);
     printf("%s",msg);
 
 }
@@ -454,7 +383,6 @@ int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
     return CONTINUA;
 }
 
-// QUESTAO 4
 int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo)
 {
 
@@ -537,7 +465,6 @@ void explodeSapo(SAPO sapo)
     printf("\\ o O    O o /");
 }
 
-// QUESTAO 3
 short testa_colisao(SAPO sapo, VEICULO veiculo)
 {
 
@@ -550,7 +477,6 @@ short testa_colisao(SAPO sapo, VEICULO veiculo)
     return 0;
 }
 
-// QUESTAO 2
 void desenha_lista_veiculos(VEICULO listaVeiculos[])
 {
     int i;
@@ -648,12 +574,11 @@ void apagaSapo(SAPO sapo)
     printf("\\^{  ]^/");
 }
 
-// QUESTAO 1
 void desenhaVeiculo(VEICULO veiculo, COLORS cor)
 {
     // imprime veiculo conforme o tipo
     // switch para adicionar carros
-    // conforme a necessidade e tirar facil também
+    // conforme a necessidade e tirar facil tambem
     switch(veiculo.tipo)
     {
     case CARRO:
@@ -665,7 +590,6 @@ void desenhaVeiculo(VEICULO veiculo, COLORS cor)
     }
 }
 
-// QUESTAO 1
 void desenhaCarro(VEICULO carro, COLORS cor)
 {
     char desenho[ALTURAVEICULO][LARGCAMINHAO];
@@ -688,7 +612,6 @@ void desenhaCarro(VEICULO carro, COLORS cor)
     carro.valido = imprimeDentro(desenho, carro, LARGCARRO);
 }
 
-// QUESTAO 1
 void desenhaCaminhao(VEICULO caminhao, COLORS cor)
 {
     char desenho[ALTURAVEICULO][LARGCAMINHAO];
@@ -722,8 +645,8 @@ int imprimeDentro(char desenho[ALTURAVEICULO][LARGCAMINHAO], VEICULO veiculo, in
             putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y, desenho[0][i]);
             putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 1, desenho[1][i]);
             putchxy(i + veiculo.envelope[0].x, veiculo.envelope[0].y + 2, desenho[2][i]);
-            // todo
-            // fazer um for até altura
+            // to do
+            // fazer um for ate altura
         }
     }
     return dentro;
@@ -751,26 +674,24 @@ void criaVeiculos(int tipos[], int posicao[])
     }
 }
 
-void desenhaAmbiente(SAPO listaSapos[], JOGADOR jog)
+void desenhaAmbiente(ESTADO estado)
 {
     gotoxy(1,1);
     textcolor(COR_MENU);
     printf(" INF1202 Eduardo & Jose     (C)arregar jogo   (P)ausa   (ESC)Sair   (R)Ranking");
     borda();
 
-    desenhaSapo(listaSapos[jog.sapoAtual]);
+    desenhaSapo(estado.listaSapos[estado.jogador.sapoAtual]);
 
-    placar(jog);
+    placar(estado.jogador);
 }
 
-// QUESTAO 6
-void calcula_score(JOGADOR *jog)
+void calculaScore(JOGADOR *jog)
 {
     int score;
 
     jog->tempoJogo = time(NULL) - jog->inicioJogo;
-    banner("Digite seu nome: ", 1);
-    scanf("%s", jog->nome);
+    pedeNome(jog);
 
     // quanto menor o score, melhor
     // punicao de 30 segundos para cada sapo morto
@@ -778,4 +699,62 @@ void calcula_score(JOGADOR *jog)
 
     gotoxy(LIM_ESQ, LIM_BAIXO+4);
     printf("SCORE: %d", score);
+}
+
+void pedeNome(JOGADOR *jog)
+{
+    banner("Digite seu nome: ", 1);
+    scanf("%s", jog->nome);
+    banner("", 1);
+}
+
+/////////////////////////////////////////////////
+//                 QUESTAO 2                   //
+/////////////////////////////////////////////////
+void pausa(ESTADO *estado)
+{
+    int erro; // 0 - sem erro, 1 - erro
+    pedeNome(&estado->jogador);
+    erro = salvaEstadoDoJogo(*estado);
+    if(erro)
+    {
+        banner("ERRO NA ABERTURA/GRAVACAO DO ARQUIVO", 1);
+    }
+}
+
+/////////////////////////////////////////////////
+//                 QUESTAO 5                   //
+/////////////////////////////////////////////////
+void instanciaJogo(ESTADO *estado)
+{
+    char nome[TAM_BANNER];
+    int erro = 0; // 0 - sem erro, 1 - erro
+
+    pedeNome(&estado->jogador);
+
+    strcpy(nome, estado->jogador.nome);
+    strcat(nome, ".bin");
+
+    erro = leJogoSalvo(estado, nome);
+    if(erro)
+    {
+        banner("ERRO NA ABERTURA/LEITURA DO ARQUIVO", 1);
+    }
+
+    apagaAmbiente();
+    desenhaAmbiente(*estado);
+}
+
+void apagaAmbiente()
+{
+    int i, j;
+    textcolor(COR_FUNDO);
+    gotoxy(1,1);
+    for(i = 0; i < LIM_DIR; i++)
+    {
+        for(j = 0; j < LIM_BAIXO + 3; j++)
+        {
+            putchxy(i,j,' ');
+        }
+    }
 }
