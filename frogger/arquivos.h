@@ -14,8 +14,9 @@ typedef struct  // essa proposta esta um pouco diferente do enunciado do Trabalh
     int saposSalvos;
     time_t inicioJogo;
     int tempoJogo;
-    int score;
+    long int score;
     int sapoAtual;
+    int saposEspera;
 } JOGADOR;
 
 typedef enum
@@ -79,9 +80,6 @@ typedef struct
     int fase; //campo opcional se quiserem trocar o desenho do carro em cada fase
 } VEICULO;
 
-/////////////////////////////////////////////////
-//                 QUESTAO 1                   //
-/////////////////////////////////////////////////
 typedef struct
 {
     JOGADOR jogador;
@@ -93,4 +91,9 @@ typedef struct
 
 int leJogoSalvo(ESTADO *estado, char nome[]);
 int salvaEstadoDoJogo(ESTADO estado);
+int AbreArqJog(FILE *arqtxt, char nome[]);
+int LeArqTexto(FILE *arqtxt, ESTADO estado, JOGADOR jogadores[]);
+void OrdenaListaJogadores(JOGADOR jogadores[], int tamArray);
+void InsereJogador(JOGADOR jogadores[], JOGADOR jog, int *tamArray, int maxArray);
+void troca(JOGADOR *a, JOGADOR *b);
 

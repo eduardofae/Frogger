@@ -8,9 +8,9 @@ Frogger UFRGS (EDUARDO e JOSE)
 #include<string.h>
 #include<windows.h>
 #include<time.h>
-#include<ctype.h>          /////////////////
-#include"arquivos.h" //<<< //  QUESTAO 6  //
-                           /////////////////
+#include<ctype.h>
+#include"arquivos.h"
+
 # define LINHA '-'
 # define COLUNA '|'
 # define PUNICAO_MORTE 30
@@ -708,9 +708,6 @@ void pedeNome(JOGADOR *jog)
     banner("", 1);
 }
 
-/////////////////////////////////////////////////
-//                 QUESTAO 2                   //
-/////////////////////////////////////////////////
 void pausa(ESTADO *estado)
 {
     int erro; // 0 - sem erro, 1 - erro
@@ -722,9 +719,6 @@ void pausa(ESTADO *estado)
     }
 }
 
-/////////////////////////////////////////////////
-//                 QUESTAO 5                   //
-/////////////////////////////////////////////////
 void instanciaJogo(ESTADO *estado)
 {
     char nome[TAM_BANNER];

@@ -19,3 +19,23 @@
 	<conio2.h>
 	"arquivos.h"
 
+1635687836 source:c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\frogger\arquivos.c
+	<stdio.h>
+	<string.h>
+	<time.h>
+	<conio2.h>
+	"arquivos.h"
+
+1635687881 c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\frogger\arquivos.h
+
+1635684034 source:c:\users\t-gamer\onedrive - pucrs - br\Área de trabalho\c\algoritmos e programação\trab final\frogger\frogger\main.c
+	<stdio.h>
+	<conio2.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<windows.h>
+	<time.h>
+	<ctype.h>
+	"arquivos.h"
+
