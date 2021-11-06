@@ -91,9 +91,7 @@ typedef struct
 
 int leJogoSalvo(ESTADO *estado, char nome[]);
 int salvaEstadoDoJogo(ESTADO estado);
-int AbreArqJog(FILE *arqtxt, char nome[]);
-int LeArqTexto(FILE *arqtxt, ESTADO estado, JOGADOR jogadores[]);
-void OrdenaListaJogadores(JOGADOR jogadores[], int tamArray);
-void InsereJogador(JOGADOR jogadores[], JOGADOR jog, int *tamArray, int maxArray);
-void troca(JOGADOR *a, JOGADOR *b);
+int AbreArqJog(FILE **arqtxt);
+int LeArqTexto(FILE *arqtxt, JOGADOR jogadores[], int maxArray);
+int SalvaListaJogadores(FILE *arqtxt, JOGADOR jogadores[], int tamArray);
 

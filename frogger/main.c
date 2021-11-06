@@ -14,6 +14,7 @@ Frogger UFRGS (EDUARDO e JOSE)
 # define LINHA '-'
 # define COLUNA '|'
 # define PUNICAO_MORTE 30
+# define MAX_JOGADORES 5
 
 enum
 {
@@ -112,17 +113,25 @@ void pedeNome(JOGADOR *jog);
 void pausa(ESTADO *estado);
 void instanciaJogo(ESTADO *estado);
 void apagaAmbiente();
+void OrdenaListaJogadores(JOGADOR jogadores[], int tamArray);
+void InsereJogador(JOGADOR jogadores[], JOGADOR jog, int *tamArray, int maxArray);
+void MostraListaJogadores(JOGADOR jogadores[], JOGADOR jog, int tamArray);
+void troca(JOGADOR *a, JOGADOR *b);
+void mostraRanking(JOGADOR jogadores[], ESTADO estado);
 
 int main()
 {
     ESTADO estado;
+    JOGADOR jogadores[MAX_JOGADORES];
 
     srand(time(NULL));
 
-    inicializar(&estado); //
+    inicializar(&estado);
     desenhaAmbiente(estado);
 
     jogo(&estado);
+
+    mostraRanking(jogadores, estado);
 
     gotoxy(LIM_ESQ, LIM_BAIXO+4);
     return(0);
@@ -243,6 +252,7 @@ void inicializaJogador(JOGADOR *jog)
     jog->tempoJogo = 0;
     jog->score = 0;
     jog->sapoAtual = 0;
+    jog->saposEspera = NUM_SAPOS - 1;
 }
 
 void borda()
@@ -346,11 +356,9 @@ void placar(JOGADOR jog)
 {
     textcolor(COR_TEXTO);
 
-    if (( NUM_SAPOS-1) - jog.sapoAtual >= 0 )
-    {
-        gotoxy(LIM_ESQ, LIM_BAIXO+1);
-        printf("SAPOS EM ESPERA: %d",(NUM_SAPOS-1) - jog.sapoAtual );
-    }
+    gotoxy(LIM_ESQ, LIM_BAIXO+1);
+    printf("SAPOS EM ESPERA: %d", jog.saposEspera);
+
     gotoxy(LIM_ESQ, LIM_BAIXO+2);
     printf("SAPOS MORTOS: %d", jog.sapoAtual - jog.saposSalvos);
 
@@ -377,6 +385,7 @@ int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
         {
             listaSapos[jog->sapoAtual].status = ATIVO;
             desenhaSapo(listaSapos[jog->sapoAtual]);
+            jog->saposEspera--;
         }
         return SAPO_SALVO;
     }
@@ -403,6 +412,7 @@ int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo)
         {
             listaSapos[jog->sapoAtual].status = ATIVO;
             desenhaSapo(listaSapos[jog->sapoAtual]);
+            jog->saposEspera--;
         }
 
         return SAPO_MORREU;
@@ -690,12 +700,14 @@ void calculaScore(JOGADOR *jog)
 {
     int score;
 
-    jog->tempoJogo = time(NULL) - jog->inicioJogo;
+    jog->tempoJogo += time(NULL) - jog->inicioJogo;
     pedeNome(jog);
 
     // quanto menor o score, melhor
     // punicao de 30 segundos para cada sapo morto
     score = jog->tempoJogo + ((NUM_SAPOS - jog->saposSalvos) * PUNICAO_MORTE);
+
+    jog->score = score;
 
     gotoxy(LIM_ESQ, LIM_BAIXO+4);
     printf("SCORE: %d", score);
@@ -711,6 +723,7 @@ void pedeNome(JOGADOR *jog)
 void pausa(ESTADO *estado)
 {
     int erro; // 0 - sem erro, 1 - erro
+    estado->jogador.tempoJogo = time(NULL) - estado->jogador.inicioJogo;
     pedeNome(&estado->jogador);
     erro = salvaEstadoDoJogo(*estado);
     if(erro)
@@ -734,9 +747,13 @@ void instanciaJogo(ESTADO *estado)
     {
         banner("ERRO NA ABERTURA/LEITURA DO ARQUIVO", 1);
     }
+    else
+    {
+        estado->jogador.inicioJogo = time(NULL);
 
-    apagaAmbiente();
-    desenhaAmbiente(*estado);
+        apagaAmbiente();
+        desenhaAmbiente(*estado);
+    }
 }
 
 void apagaAmbiente()
@@ -750,5 +767,93 @@ void apagaAmbiente()
         {
             putchxy(i,j,' ');
         }
+    }
+}
+
+void OrdenaListaJogadores(JOGADOR jogadores[], int tamArray)
+{
+    int i, j;
+    for(i = 0; i < tamArray - 1; i++)
+    {
+        for(j = i + 1; j < tamArray; j++)
+        {
+            if(jogadores[i].score > jogadores[j].score)
+            {
+                troca(&jogadores[i], &jogadores[j]);
+            }
+        }
+    }
+}
+
+void InsereJogador(JOGADOR jogadores[], JOGADOR jog, int *tamArray, int maxArray)
+{
+    int i = 0, encontrou = 0;
+    OrdenaListaJogadores(jogadores, *tamArray);
+    while(!encontrou && i < *tamArray)
+    {
+        if(strcmp(jog.nome, jogadores[i].nome) == 0)
+        {
+            if(jog.score < jogadores[i].score)
+            {
+                jogadores[i] = jog;
+            }
+            encontrou = 1;
+        }
+        i++;
+    }
+    if(!encontrou && strcmp(jog.nome, "") != 0)
+    {
+        if(i < maxArray)
+        {
+            jogadores[i] = jog;
+            (*tamArray)++;
+        }
+        else if(jogadores[*tamArray - 1].score > jog.score)
+        {
+            jogadores[*tamArray - 1] = jog;
+        }
+    }
+    OrdenaListaJogadores(jogadores, *tamArray);
+}
+
+void MostraListaJogadores(JOGADOR jogadores[], JOGADOR jog, int tamArray)
+{
+    int i, jogNaLista = 0;
+    textcolor(COR_TEXTO);
+    for(i = 0; i < tamArray; i++)
+    {
+        if(strcmp(jogadores[i].nome, jog.nome) == 0)
+        {
+            jogNaLista = 1;
+        }
+        gotoxy(LIM_DIR + 1, LIM_CIMA + i);
+        printf("%d - %-*s (%03ld)", i + 1, TAM_BANNER, jogadores[i].nome, jogadores[i].score);
+    }
+    if(!jogNaLista && strcmp(jog.nome, "") != 0)
+    {
+        gotoxy(LIM_DIR + 1, LIM_CIMA + i);
+        printf("%d - %-*s (%03ld)", i + 1, TAM_BANNER, jog.nome, jog.score);
+    }
+}
+
+void troca(JOGADOR *a, JOGADOR *b)
+{
+    JOGADOR aux = *a;
+    *a = *b;
+    *b = aux;
+}
+
+void mostraRanking(JOGADOR jogadores[], ESTADO estado)
+{
+    FILE *arqtxt = 0;
+    int semErro, tamArray;
+    semErro = AbreArqJog(&arqtxt);
+    if(semErro)
+    {
+        tamArray = LeArqTexto(arqtxt, jogadores, MAX_JOGADORES);
+        InsereJogador(jogadores, estado.jogador, &tamArray, MAX_JOGADORES);
+        MostraListaJogadores(jogadores, estado.jogador, tamArray);
+        semErro = SalvaListaJogadores(arqtxt, jogadores, tamArray);
+        fclose(arqtxt);
     }
 }
