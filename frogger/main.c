@@ -1,6 +1,33 @@
 /*
 Frogger UFRGS (EDUARDO e JOSE)
+
+Status dos requisitos:
+1 ok
+2 ok
+3 ok
+4 ok
+5 ok
+6 7 8 ok
+9 ok
+10 ok
+11 ok
+12 nok função ranking não implementada
+13 ok
+14 ok
+15 ok 
+16 nok mostra o ranking e funciona porém não mostra o ranking com o r
+17 ok
+18 ok
+19 ok
+20 ok
+21 ok
+22 nok não implementado
+23 nok isso é possível porém não foi implementado
+24 ok
+
 */
+
+// libs utilizadas
 #include<stdio.h>
 #include<conio2.h>
 #include<stdlib.h>
@@ -9,13 +36,17 @@ Frogger UFRGS (EDUARDO e JOSE)
 #include<windows.h>
 #include<time.h>
 #include<ctype.h>
-#include"arquivos.h"
+#include"arquivos.h" // lib que criamos para lidar com os arquivos
 
+// constantes auxiliares para o jogo
 # define LINHA '-'
 # define COLUNA '|'
 # define PUNICAO_MORTE 30
 # define MAX_JOGADORES 5
 
+// temos aqui series diferentes de enums auxiliares que vão
+// desde lidar com as teclas do teclado até auxiliar nos
+// x y das pistas
 enum
 {
     ENTER = 13,
@@ -86,6 +117,8 @@ enum
     X2_INI_PISTA = LIM_ESQ - 1
 };
 
+// prototipos das funções
+
 void borda();
 void desenhaSapo(SAPO sapo);
 void apagaSapo(SAPO sapo);
@@ -119,6 +152,20 @@ void MostraListaJogadores(JOGADOR jogadores[], JOGADOR jog, int tamArray);
 void troca(JOGADOR *a, JOGADOR *b);
 void mostraRanking(JOGADOR jogadores[], ESTADO estado);
 
+// na main usamos a estrutura estado que vai ter a lista de sapos, o jogador, a lista de 
+// veiculos e a fase atual, nosso jogo não troca de fase mas ficou com isso nas estruturas
+// para ser possível fazer com facilidade
+// na main também temos a lista de jogadores que será mostrada no ranking
+// criamos a semente randomica que auxiliará na inicialização geral do jogo
+// isolamos as inicializações na função inicializar e mandamos por referencia o estado atual pois
+// ele será modificado la dentro
+// depois usamos desenhaAmbiente para desenhar o ambiente, fazemos isso passando o estao atual
+// depois a função jogo que tem o loop principal do jogo
+// quando o jogo acaba aqui na main chamamos a função mostrar ranking mandando aquela lista de jogadores
+// e a variavel estado
+// usamos a função gotoxy no final apenas para o cursor final ficar posicionado em uma posição que não 
+// atrapalhe a visualização da tela final do jogo e por fim a main retorna 0 indicando que tudo ok 
+// na execução
 int main()
 {
     ESTADO estado;
@@ -137,15 +184,24 @@ int main()
     return(0);
 }
 
+// função inicializar recebe estado mas pega cada parte separadamente
+// e as inicializa
 void inicializar(ESTADO *estado)
 {
-    inicializaJogador(&estado->jogador);
+    inicializaJogador(&estado->jogador); // jogador é uma estrutura dentro de estado que deve ser passado por referencia, então chegamos ae jogador e então damos sua referencia
+
+
+    // os demais inicializa são arrays e portanto ja são passados por referencia
 
     inicializaSapos(estado->listaSapos);
 
     inicializaVeiculos(estado->listaVeiculos);
 }
 
+// percorremos a lista colocando os sapos em espera , damos a cor padrão do sapo
+// e usamos as consta de posição para dizer que a posição inicial de todos os sapos
+// é o local de onde ele parte no seu momento inicial
+// no fim dizemos que o primeiro sapo é ativo
 void inicializaSapos(SAPO listaSapos[])
 {
     int i;
@@ -167,26 +223,33 @@ void inicializaVeiculos(VEICULO veiculos[])
 
     int i,posPista=0,pista=0;
     int largVeiculo;
-    int ypistas[QTD_PISTA];
+    int ypistas[QTD_PISTA]; // array que tem os y das pistas será nossa lista de pistas
 
-    ypistas[pista] = Y_INI_PISTA;
+    ypistas[pista] = Y_INI_PISTA; // primeira pista recebe a posição da pista mais acima na tela
 
-    for (i= pista + 1; i<QTD_PISTA; i++)
+    // inicialização das alturas das pistas
+    for (i= pista + 1; i<QTD_PISTA; i++) // vai percorrer todas as pistas a partir da segunda
     {
-        ypistas[i] = ypistas[i-1] + LARG_PISTA;
+        ypistas[i] = ypistas[i-1] + LARG_PISTA; // posição da proxima pista é posição da pista anterior - largura padrão 
 
+        // quando a posição coincide com a linha do meio da parte de cima então dizemos para
+        // pular o vale central e ter seu proximos y 1 abaixo da linha inferior
         if (ypistas[i] == MEIO_CIMA)
         {
             ypistas[i] = MEIO_BAIXO + 1;
         }
     }
 
+    // inicializa as distancias entre os veiculos
+    // perceba que pesa bastante no nosso loop o fato de termos
+    // optado por fazer um array que contém todos os veiculos
     for (i=0; i<QTD_VEICULOS; i++)
     {
-        veiculos[i].envelope[0].y = ypistas[pista];
-        veiculos[i].envelope[1].y = veiculos[i].envelope[0].y + ALTURASAPO;
-        veiculos[i].tipo = rand() % 2;
+        veiculos[i].envelope[0].y = ypistas[pista]; // y mais superior do envelope
+        veiculos[i].envelope[1].y = veiculos[i].envelope[0].y + ALTURASAPO; // y mais abaixo do envelope é o y do envelope anterior mais a altura do sapo
+        veiculos[i].tipo = rand() % 2; // sorteia o tipo do veiculo
 
+	// conforme o tipo do veiculo escolhe sua largura
         switch (veiculos[i].tipo)
         {
             case CARRO:
@@ -197,8 +260,9 @@ void inicializaVeiculos(VEICULO veiculos[])
                 break;
         }
 
-        veiculos[i].distancia = DIST_MIN + rand() % DIST_VARIACAO;
+        veiculos[i].distancia = DIST_MIN + rand() % DIST_VARIACAO; // soma a distancia minima aceitavel com uma variação sorteada
 
+	// optamos por colocar as pistas impar indo pra direita 
         if (pista % 2)
         {
             veiculos[i].dir = DIR_DIREITA;
@@ -208,8 +272,12 @@ void inicializaVeiculos(VEICULO veiculos[])
             veiculos[i].dir = DIR_ESQUERDA;
         }
 
-        if (posPista == 0)
+        // determina em que local estará o carro 
+        if (posPista == 0) // se é o primeiro carro trata especial
         {
+		// se a direção do carro é pra direita e é o primeiro então será proximo a parede da direita o x do seu envelope
+		// mais a direita e logo o outro sera o mesmo - sua largura definida anteriormente
+		// e o analogo para esquerda
             if (veiculos[i].dir == DIR_DIREITA )
             {
                 veiculos[i].envelope[1].x = LIM_DIR - 1;
@@ -221,8 +289,13 @@ void inicializaVeiculos(VEICULO veiculos[])
                 veiculos[i].envelope[1].x = veiculos[i].envelope[0].x + largVeiculo;
             }
         }
-        else
+        else // formula geral após tratamento da excessão 
         {
+		// para todo veiculo após ja tratada a excessão indo para a direita pegue o x do envelope mais a esquerda
+		// e então some a distancia definida previamente e este é o x do envelope atual mais a direita
+		// que servira como base para o x mais a esquerda deste envelope diminuida a largura da veiculo
+		// pois os carros estão indo da esquerda para direita
+		// e o analogo para o proximo caso
             if (veiculos[i].dir == DIR_DIREITA )
             {
                 veiculos[i].envelope[1].x = veiculos[i-1].envelope[0].x - veiculos[i].distancia;
@@ -235,8 +308,8 @@ void inicializaVeiculos(VEICULO veiculos[])
             }
         }
 
-        posPista++;
-        if ( posPista == VEIC_PISTA )
+        posPista++; // essa variavel vai de 0 até VEIC_PISTA que é a quantidade de carros por pista
+        if ( posPista == VEIC_PISTA ) // quando posPista chegar nesse valor ele é zerado e avançamos para a o loop tratar da proxima pista
         {
             pista++;
             posPista=0;
@@ -244,6 +317,7 @@ void inicializaVeiculos(VEICULO veiculos[])
     }
 }
 
+// recebe por referencia e apenas iniciliza os valores básicos do jogador
 void inicializaJogador(JOGADOR *jog)
 {
     strcpy(jog->nome,"");
@@ -255,81 +329,84 @@ void inicializaJogador(JOGADOR *jog)
     jog->saposEspera = NUM_SAPOS - 1;
 }
 
+// desenha bordas do jogo
 void borda()
 {
     int i;
     textcolor(COR_BORDA);
-    // Linhas Verticais
+    // desenha Linhas Verticais
     for(i = LIM_CIMA; i <= LIM_BAIXO; i++)
     {
         putchxy(LIM_ESQ, i, COLUNA);
         putchxy(LIM_DIR, i, COLUNA);
     }
-    // Linhas Horizontais
+    // desenha Linhas Horizontais
     for(i = LIM_ESQ; i <= LIM_DIR; i++)
     {
         putchxy(i, LIM_CIMA, LINHA);
         putchxy(i, LIM_BAIXO, LINHA);
-        // Linhas de separacao
+        // desenha Linhas de separacao
         putchxy(i, CHEGADA, LINHA);
         putchxy(i, MEIO_BAIXO, LINHA);
         putchxy(i, MEIO_CIMA, LINHA);
     }
 }
 
+// loop principal
 void jogo(ESTADO *estado)
 {
     STATUS_JOGO status = CONTINUA;
     int i;
     char tecla;
 
-    while (status!=SAIR)
+    while (status!=SAIR) // vai ficar nesse loop até o status de sair ser alcançado
     {
         status=CONTINUA;
-        desenha_lista_veiculos(estado->listaVeiculos);
+        desenha_lista_veiculos(estado->listaVeiculos); // manda a lista de veiculos para ser desenhada na tela nas suas posições atuais
         i = 0;
-        while(i < QTD_VEICULOS && status==CONTINUA)
+        while(i < QTD_VEICULOS && status==CONTINUA)  // percorre toda a lista de veiculos ou até perceber que algum veiculo matou o sapo
         {
-            if(estado->listaVeiculos[i].valido)
+            if(estado->listaVeiculos[i].valido) // só entra no carro que esta dentro da area jogavel
             {
-                status = mata_sapo(estado->listaSapos, &estado->jogador, estado->listaVeiculos[i]);
+                status = mata_sapo(estado->listaSapos, &estado->jogador, estado->listaVeiculos[i]); // verifica se o sapo esta vivo e retorna o status disso pra fora
             }
             i++;
         }
 
-        if(status == CONTINUA)
+        if(status == CONTINUA) // se o sapo esta vivo ver se ele foi salvo
         {
             status = salvaSapo(&estado->jogador, estado->listaSapos);
         }
 
-        if (status != CONTINUA)
+        if (status != CONTINUA) // mostra o placar se o sapo esta vivo
         {
             placar(estado->jogador);
         }
 
-        if (status == SAIR)
+        if (status == SAIR) // se sair do jogo ou morrer exibe banner e calcula score do jogador
         {
             banner("GAME OVER!!!", 0);
             calculaScore(&estado->jogador);
         }
 
-        if(_kbhit())
+        if(_kbhit()) // percebe se alguma tecla foi pressionada
         {
-            tecla = getch();
-            switch(tecla)
+            tecla = getch(); // pega o que foi pressionado 
+            switch(tecla) // verifica o que foi pressionado e então trata, caso seja a tecla de movimento pega a proxima que vai ser o movimento em si
+			  // e então trata o movimento do sapo
             {
             case ESPECIAL:
                 tecla = getch();
                 moveSapo(&estado->listaSapos[estado->jogador.sapoAtual], tecla);
                 break;
-            case PAUSA:
+            case PAUSA: // trata pausa
                 pausa(estado);
                 desenhaSapo(estado->listaSapos[estado->jogador.sapoAtual]);
                 break;
-            case CARREGAR:
+            case CARREGAR: // trata carregamento de save a partir do arquivo
                 instanciaJogo(estado);
                 break;
-            case ESC:
+            case ESC: // sai do jogo
                 status = SAIR;
                 break;
             }
@@ -337,6 +414,7 @@ void jogo(ESTADO *estado)
     }
 }
 
+// função auxiliar para exibir uma mensagem na tela
 void banner(char msg[TAM_BANNER], int y)
 {
 
@@ -352,6 +430,7 @@ void banner(char msg[TAM_BANNER], int y)
 
 }
 
+// mostra o placar do jogo
 void placar(JOGADOR jog)
 {
     textcolor(COR_TEXTO);
@@ -366,9 +445,11 @@ void placar(JOGADOR jog)
     printf("SAPOS SALVOS: %d", jog.saposSalvos );
 }
 
+// função para ver se o jogodor esta no ponto de salvamento
 int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
 {
-    if(listaSapos[jog->sapoAtual].envelope[1].y<=CHEGADA)
+    if(listaSapos[jog->sapoAtual].envelope[1].y<=CHEGADA) // se no envelope do sapo atual o y mais acima esta dentro da area de salvamento então 
+								// o sapo foi salvo
     {
         apagaSapo(listaSapos[jog->sapoAtual]);
         jog->saposSalvos++;
@@ -377,19 +458,19 @@ int salvaSapo(JOGADOR *jog, SAPO listaSapos[])
 
         jog->sapoAtual++;
 
-        if (jog->sapoAtual == NUM_SAPOS)
+        if (jog->sapoAtual == NUM_SAPOS)  // se ja acabou o total de sapos então retorna status de finalização
         {
             return SAIR;
         }
-        else
+        else // senão define o próximo sapo com status de ativo, desenha ele e ajusta o total de sapos em espera 
         {
             listaSapos[jog->sapoAtual].status = ATIVO;
             desenhaSapo(listaSapos[jog->sapoAtual]);
             jog->saposEspera--;
         }
-        return SAPO_SALVO;
+        return SAPO_SALVO; // status indicando que um sapo foi salvo
     }
-    return CONTINUA;
+    return CONTINUA; // status indicando que o jogo apenas deve continuar pois o sapo não foi salvo
 }
 
 int mata_sapo(SAPO listaSapos[], JOGADOR *jog, VEICULO veiculo)
@@ -694,6 +775,13 @@ void desenhaAmbiente(ESTADO estado)
     desenhaSapo(estado.listaSapos[estado.jogador.sapoAtual]);
 
     placar(estado.jogador);
+   
+    timer(estado.jogador);
+}
+
+void timer(JOGADOR jog) {
+    gotoxy(LIM_BAIXO, LIM_DIR-5);
+    printf("%ld", jog->inicioJogo-time(null));
 }
 
 void calculaScore(JOGADOR *jog)
@@ -857,3 +945,4 @@ void mostraRanking(JOGADOR jogadores[], ESTADO estado)
         fclose(arqtxt);
     }
 }
+
